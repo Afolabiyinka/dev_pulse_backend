@@ -1,13 +1,17 @@
 from fastapi import  Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 from app.auth.auth_validation import SignUpRequest, LoginRequest
-from app.core import token_helper
-from app.core import cookies_helper
-
 from app.auth import auth_service
 from app.database.db_session import get_db
 from app.core.cookies_helper import create_auth_cookie
+from fastapi.responses import RedirectResponse
+from app.config import settings
+from loguru import logger
+from urllib.parse import urlencode
 
+
+
+# Create an account with email and password
 def signup(
     data: SignUpRequest,
      response: Response,
@@ -23,13 +27,14 @@ def signup(
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) 
 
   except Exception as error:
-   print(f"Failed to create account: {error}")
+   logger.error(f"Failed to create account: {error}")
    raise HTTPException(status_code=500, detail="Something went wrong")
     
 
+# Login with email and password
 def login(data: LoginRequest, response: Response, db: Session = Depends(get_db)):
   try:
-    user = auth_service.authenticate_user(db, data.email, data.password)
+    user = auth_service.authenticate_user(db, data=data)
     if not user :
       raise HTTPException(status_code=401, detail="Invalid Credentials")
     create_auth_cookie(response, user.id)
@@ -37,8 +42,55 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
   except HTTPException:
    raise
   except Exception as error:
-    print(f"Login failed: {error}")
-    raise HTTPException(status_code=500, detail="Something went wrong")
+   logger.error(f"Login Failed: {error}")
+  raise HTTPException(status_code=500, detail="Something went wrong")
+
+
+# the github route the frontend calls 
+
+async def github_login():
+    params = {
+        "client_id": settings.github_client_id,
+        "redirect_uri": settings.github_redirect_uri,
+        "scope": "read:user user:email repo",
+    }
+
+    github_url = (
+        "https://github.com/login/oauth/authorize?"
+        + urlencode(params)
+    )
+
+    return RedirectResponse(github_url)
+
+
+# The controller that exchnages the code and checks if user is created
+async def github_callback(
+    code: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        github_token = await auth_service.exchange_github_code(code)
+        user = await auth_service.authenticate_github_user(
+            db=db,
+            github_token=github_token,
+        )
+
+        redirect = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
+        create_auth_cookie(redirect, user.id)
+        return redirect
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        )
+
+    except Exception as error:
+        logger.exception("GitHub authentication failed {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="GitHub authentication failed",
+        )
 
 def logout(response: Response):
   response.delete_cookie("access_token", path="/")

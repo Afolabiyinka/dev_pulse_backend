@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     jwt_secret: str
-    frontend_local_url: str
+    frontend_url: str
     frontend_prod_url: str
     port: int
     database_url: str
