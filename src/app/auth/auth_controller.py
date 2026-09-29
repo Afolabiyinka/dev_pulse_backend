@@ -47,7 +47,6 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
 
 
 # the github route the frontend calls 
-
 async def github_login():
     params = {
         "client_id": settings.github_client_id,
@@ -63,7 +62,7 @@ async def github_login():
     return RedirectResponse(github_url)
 
 
-# The controller that exchnages the code and checks if user is created
+# The controller that exchanges token with github and creates the auth logic 
 async def github_callback(
     code: str,
     db: Session = Depends(get_db),
