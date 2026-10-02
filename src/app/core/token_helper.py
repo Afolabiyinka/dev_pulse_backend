@@ -26,17 +26,3 @@ def decode_token(token: str) -> dict:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-def get_current_user(
-    request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
-) -> dict:
-    token = credentials.credentials if credentials else request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    payload = decode_token(token)
-    return payload

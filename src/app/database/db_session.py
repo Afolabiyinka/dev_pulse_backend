@@ -5,9 +5,8 @@ from loguru import logger
 
 def get_db() -> Generator:
     db = SessionLocal()
-
     try:
         yield db
-        logger.success("Neon Db Connected Succesfully")
+        logger.success("Database session completed successfully")
     finally:
         db.close()

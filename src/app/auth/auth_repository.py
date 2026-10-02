@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
+
+from app.account.account_repository import normalize_email
 from app.account.user_model import User
+
 
 def create_user(
     db: Session,
@@ -12,7 +15,7 @@ def create_user(
     github_authenticated: bool = False,
 ):
     user = User(
-        email=email,
+        email=normalize_email(email),
         password=password,
         github_id=github_id,
         github_username=github_username,

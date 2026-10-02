@@ -8,6 +8,6 @@ def test_database_connection():
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
         logger.success("Neon DB Connected Successfully")
-
-    except Exception as e:
-        logger.error(f"Neon DB Connection Failed: {e}")
+    except Exception as error:
+        logger.exception("Neon DB connection failed")
+        raise
