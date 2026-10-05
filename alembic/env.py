@@ -5,16 +5,14 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.config import settings
+from app.core.config import envVariables
 from app.database.database import Base
-from app.account import user_model
-
 
 config = context.config
 
 config.set_main_option(
     "sqlalchemy.url",
-    settings.database_url,
+    envVariables.database_url,
 )
 
 

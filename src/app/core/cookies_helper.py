@@ -1,4 +1,4 @@
-from app.config import settings
+from app.core.config import envVariables
 from app.core.token_helper import create_token
 from fastapi  import Response
 import uuid
@@ -6,7 +6,7 @@ def get_token_cookie_options():
     return {
         "key": "access_token",
         "httponly": True,
-        "secure": False if settings.env == "development" else True, # True in prod
+        "secure": False if envVariables.env == "development" else True, # True in prod
         "samesite": "lax",
         "max_age": 60 * 60 * 24 * 7, # 7 days
         "path": "/",

@@ -1,9 +1,9 @@
-from .config import settings
+from app.core.config import envVariables
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database.test_connection import test_database_connection
-from app.auth.auth_routes import AuthRouter
-from .account.account_routes import AccountRouter
+from app.modules.auth.auth_routes import AuthRouter
+from app.modules.account.account_routes import  AccountRouter
 from app.core.exception_handlers import register_exception_handlers
 from fastapi.middleware.cors import CORSMiddleware
 from scalar_fastapi import get_scalar_api_reference
@@ -18,7 +18,7 @@ register_exception_handlers(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        settings.frontend_url,
+        envVariables.frontend_url,
     ],
     allow_credentials=True,
     allow_methods=["*"],

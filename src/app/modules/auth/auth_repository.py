@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.account.account_repository import normalize_email
-from app.account.user_model import User
+from app.modules.account.account_repository import normalize_email
+from app.modules.account.user_model import User
 
 
 def create_user(

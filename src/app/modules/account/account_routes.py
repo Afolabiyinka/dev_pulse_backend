@@ -1,21 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.account import account_service
-from app.account.account_repository import get_user_by_id
-from app.account.account_schema import UpdateAccountRequest, UserResponse
-from app.auth.auth_dependency import get_current_user
+from app.modules.account import account_service
+from app.modules.account.account_repository import get_user_by_id
+from app.modules.account.account_schema import UpdateAccountRequest, UserResponse
+from app.modules.auth.auth_dependency import auth_middleware
 from app.database.db_session import get_db
 
 AccountRouter = APIRouter(
     prefix="/api/account",
     tags=["Account"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(auth_middleware)],
 )
 
 
 def get_user(
-    user_id: int = Depends(get_current_user),
+    user_id: int = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ):
     user = get_user_by_id(db=db, user_id=user_id)
@@ -27,7 +27,7 @@ def get_user(
 
 def edit_account(
     data: UpdateAccountRequest,
-    user_id: int = Depends(get_current_user),
+    user_id: int = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ):
     user = get_user_by_id(db=db, user_id=user_id)
@@ -38,7 +38,7 @@ def edit_account(
 
 
 def delete_account(
-    user_id: int = Depends(get_current_user),
+    user_id: int = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ) -> None:
     user = get_user_by_id(db=db, user_id=user_id)

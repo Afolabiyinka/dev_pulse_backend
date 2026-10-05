@@ -2,7 +2,7 @@ from fastapi import Cookie, HTTPException, status
 from app.core.token_helper import decode_token
 
 
-def get_current_user(access_token: str | None = Cookie(default=None)):
+def auth_middleware(access_token: str | None = Cookie(default=None)):
     if not access_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

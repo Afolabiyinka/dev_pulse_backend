@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 import httpx
-from app.account.account_repository import get_user_by_email
-from app.auth.auth_repository import create_user
-from app.auth.auth_validation import LoginRequest, SignUpRequest
-from app.auth.github_auth_services import get_github_email, get_github_user
-from app.config import settings
+from app.modules.account.account_repository import get_user_by_email
+from app.modules.auth.auth_repository import create_user
+from app.modules.auth.auth_validation import LoginRequest, SignUpRequest
+from app.modules.auth.github_auth_services import get_github_email, get_github_user
+from app.core.config import envVariables
 from app.core.security import hash_password, verify_password
 
 
@@ -70,10 +70,10 @@ async def exchange_github_code(code: str):
         response = await client.post(
             "https://github.com/login/oauth/access_token",
             data={
-                "client_id": settings.github_client_id,
-                "client_secret": settings.github_client_secret,
+                "client_id": envVariables.github_client_id,
+                "client_secret": envVariables.github_client_secret,
                 "code": code,
-                "redirect_uri": settings.github_redirect_uri,
+                "redirect_uri": envVariables.github_redirect_uri,
             },
             headers={
                 "Accept": "application/json",

@@ -1,6 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from app.account.user_model import User
+from app.modules.account.user_model import User
 
 def normalize_email(email: str) -> str:
     return email.strip().casefold()

@@ -1,24 +1,24 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.config import settings
+from fastapi import HTTPException
+from fastapi.security import HTTPBearer
+from app.core.config import envVariables
 
 security = HTTPBearer(auto_error=False)
 
 def create_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expires_mins)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=envVariables.jwt_expires_mins)
     to_encode.update({"exp": expire})
-    token = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    token = jwt.encode(to_encode, envVariables.jwt_secret, algorithm=envVariables.jwt_algorithm)
     return token
 
 def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(
             token, 
-            settings.jwt_secret, 
-            algorithms=[settings.jwt_algorithm]
+            envVariables.jwt_secret,
+            algorithms=[envVariables.jwt_algorithm]
         )
         return payload
     except jwt.ExpiredSignatureError:

@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.auth import auth_service
-from app.auth.auth_validation import LoginRequest, SignUpRequest
-from app.config import settings
+from app.modules.auth import auth_service
+from app.modules.auth.auth_validation import LoginRequest, SignUpRequest
+from app.core.config import envVariables
 from app.core.cookies_helper import create_auth_cookie
 from app.database.db_session import get_db
 
@@ -60,8 +60,8 @@ def logout(response: Response):
 
 async def github_login():
     params = {
-        "client_id": settings.github_client_id,
-        "redirect_uri": settings.github_redirect_uri,
+        "client_id": envVariables.github_client_id,
+        "redirect_uri": envVariables.github_redirect_uri,
         "scope": "read:user user:email repo",
     }
 
@@ -80,7 +80,7 @@ async def github_callback(
             github_token=github_token,
         )
 
-        redirect = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
+        redirect = RedirectResponse(url=f"{envVariables.frontend_url}/dashboard")
         create_auth_cookie(redirect, user.id)
         return redirect
     except ValueError as error:
