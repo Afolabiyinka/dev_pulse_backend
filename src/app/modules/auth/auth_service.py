@@ -1,7 +1,5 @@
 from sqlalchemy.orm import Session
-
 import httpx
-
 from app.account.account_repository import get_user_by_email
 from app.auth.auth_repository import create_user
 from app.auth.auth_validation import LoginRequest, SignUpRequest
