@@ -1,8 +1,10 @@
 from fastapi import Cookie, HTTPException, status
+from uuid import UUID
+
 from app.core.token_helper import decode_token
 
 
-def auth_middleware(access_token: str | None = Cookie(default=None)):
+def auth_middleware(access_token: str | None = Cookie(default=None)) -> UUID:
     if not access_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -19,10 +21,16 @@ def auth_middleware(access_token: str | None = Cookie(default=None)):
 
     user_id = payload.get("userid")
 
-    if not user_id:
+    if not isinstance(user_id, str):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",
         )
 
-    return int(user_id)
+    try:
+        return UUID(user_id)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        ) from error

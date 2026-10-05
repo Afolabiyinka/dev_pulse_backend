@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from app.modules.account.user_model import User
@@ -12,7 +14,7 @@ def get_user_by_email(email, db: Session):
         select(User).where(func.lower(User.email) == normalized_email)
     )
 
-def get_user_by_id(db: Session, user_id: int):
+def get_user_by_id(db: Session, user_id: UUID):
     return db.scalar(
         select(User).where(User.id == user_id)
     )

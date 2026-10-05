@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -15,7 +17,7 @@ AccountRouter = APIRouter(
 
 
 def get_user(
-    user_id: int = Depends(auth_middleware),
+    user_id: UUID = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ):
     user = get_user_by_id(db=db, user_id=user_id)
@@ -27,7 +29,7 @@ def get_user(
 
 def edit_account(
     data: UpdateAccountRequest,
-    user_id: int = Depends(auth_middleware),
+    user_id: UUID = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ):
     user = get_user_by_id(db=db, user_id=user_id)
@@ -38,7 +40,7 @@ def edit_account(
 
 
 def delete_account(
-    user_id: int = Depends(auth_middleware),
+    user_id: UUID = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ) -> None:
     user = get_user_by_id(db=db, user_id=user_id)

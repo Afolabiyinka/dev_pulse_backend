@@ -1,3 +1,4 @@
+from loguru import logger
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -14,6 +15,14 @@ AuthRouter = APIRouter(
     prefix="/api/auth",
     tags=["Authentication"],
 )
+
+
+
+def github_auth_failure_redirect():
+    login_url = f"{envVariables.frontend_url.rstrip('/')}/auth/login"
+    return RedirectResponse(
+        url=f"{login_url}?{urlencode({'error': 'github_auth_failed'})}"
+    )
 
 
 def signup(
@@ -70,9 +79,13 @@ async def github_login():
 
 
 async def github_callback(
-    code: str,
+    code: str | None = None,
+    error: str | None = None,
     db: Session = Depends(get_db),
 ):
+    if error or not code:
+        return github_auth_failure_redirect()
+
     try:
         github_token = await auth_service.exchange_github_code(code)
         user = await auth_service.authenticate_github_user(
@@ -80,13 +93,12 @@ async def github_callback(
             github_token=github_token,
         )
 
-        redirect = RedirectResponse(url=f"{envVariables.frontend_url}/dashboard")
+        redirect = RedirectResponse(url=f"{envVariables.frontend_url}")
         create_auth_cookie(redirect, user.id)
         return redirect
-    except ValueError as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
-    except Exception as error:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="GitHub authentication failed") from error
+    except Exception:
+        logger.exception("GitHub authentication failed")
+        return github_auth_failure_redirect()
 
 
 AuthRouter.add_api_route("/signup", signup, methods=["POST"], name="Create a new account")
