@@ -1,19 +1,27 @@
+import logging
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.config import settings
+from app.core.config import envVariables
 
+
+logging.getLogger("sqlalchemy").setLevel(logging.ERROR)
 
 engine = create_engine(
-    settings.database_url,
+    envVariables.database_url,
+    echo=False,
+    pool_pre_ping=True,
+
 )
 
 SessionLocal = sessionmaker(
-    bind=engine,
-    autoflush=False,
-    autocommit=False,
+   autoflush=False,
+   autocommit=False,
+   bind=engine,
 )
 
 
 class Base(DeclarativeBase):
     pass
+
