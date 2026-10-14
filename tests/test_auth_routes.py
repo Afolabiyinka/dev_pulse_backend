@@ -171,7 +171,7 @@ def test_github_callback_success_redirects_and_sets_auth_cookie(
     client, monkeypatch
 ):
     monkeypatch.setattr(
-        auth_routes.auth_service,
+        auth_routes.github_services,
         "exchange_github_code",
         AsyncMock(return_value="github-token"),
     )

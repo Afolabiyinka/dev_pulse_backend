@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.modules.account import account_service
@@ -20,6 +20,7 @@ AccountRouter = APIRouter(
 @AccountRouter.get("/me", name="Get Account Information", response_model=UserResponse)
 @limiter.limit(GLOBAL_RATE_LIMIT)
 def get_user(
+    request: Request,
     user_id: UUID = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ):
@@ -32,6 +33,7 @@ def get_user(
 @AccountRouter.patch("/me", name="Edit account information", response_model=UserResponse)
 @limiter.limit(GLOBAL_RATE_LIMIT)
 def edit_account(
+    request: Request,
     data: UpdateAccountRequest,
     user_id: UUID = Depends(auth_middleware),
     db: Session = Depends(get_db),
@@ -44,8 +46,9 @@ def edit_account(
 
 @AccountRouter.delete("/me", name="Delete your account",  status_code=status.HTTP_204_NO_CONTENT,
 )
-
+@limiter.limit(GLOBAL_RATE_LIMIT)
 def delete_account(
+    request: Request,
     user_id: UUID = Depends(auth_middleware),
     db: Session = Depends(get_db),
 ) -> None:
