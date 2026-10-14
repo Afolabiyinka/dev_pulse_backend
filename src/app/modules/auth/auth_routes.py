@@ -1,7 +1,7 @@
 from loguru import logger
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -10,13 +10,14 @@ from app.modules.auth.auth_validation import LoginRequest, SignUpRequest
 from app.core.config import envVariables
 from app.core.cookies_helper import create_auth_cookie
 from app.database.db_session import get_db
+from app.core.rate_limiter import AUTH_RATE_LIMIT, LOGIN_RATE_LIMIT, limiter
+from app.core.encryption_helpers import encrypt_token
+from app.modules.github import github_services
 
 AuthRouter = APIRouter(
-    prefix="/api/auth",
+    prefix="/auth",
     tags=["Authentication"],
 )
-
-
 
 def github_auth_failure_redirect():
     login_url = f"{envVariables.frontend_url.rstrip('/')}/auth/login"
@@ -25,7 +26,10 @@ def github_auth_failure_redirect():
     )
 
 
+@AuthRouter.post("/signup", name="Create a new account")
+@limiter.limit(AUTH_RATE_LIMIT)
 def signup(
+    request: Request,
     data: SignUpRequest,
     response: Response,
     db: Session = Depends(get_db),
@@ -43,7 +47,10 @@ def signup(
         ) from error
 
 
+@AuthRouter.post("/login", name="Login into your account")
+@limiter.limit(LOGIN_RATE_LIMIT)
 def login(
+    request: Request,
     data: LoginRequest,
     response: Response,
     db: Session = Depends(get_db),
@@ -62,12 +69,16 @@ def login(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong") from error
 
 
-def logout(response: Response):
+@AuthRouter.post("/logout", name="Logout from your account")
+@limiter.limit(AUTH_RATE_LIMIT)
+def logout(request: Request, response: Response):
     response.delete_cookie("access_token", path="/")
     return {"message": "Logged out"}
 
 
-async def github_login():
+@AuthRouter.get("/github", name="Login with GitHub")
+@limiter.limit(AUTH_RATE_LIMIT)
+async def github_login(request: Request):
     params = {
         "client_id": envVariables.github_client_id,
         "redirect_uri": envVariables.github_redirect_uri,
@@ -78,7 +89,10 @@ async def github_login():
     return RedirectResponse(github_url)
 
 
+@AuthRouter.get("/github/callback", name="Exchange tokens with GitHub")
+@limiter.limit(AUTH_RATE_LIMIT)
 async def github_callback(
+    request: Request,
     code: str | None = None,
     error: str | None = None,
     db: Session = Depends(get_db),
@@ -87,10 +101,12 @@ async def github_callback(
         return github_auth_failure_redirect()
 
     try:
-        github_token = await auth_service.exchange_github_code(code)
+        github_token = await github_services.exchange_github_code(code)
+        encrypted_token = encrypt_token(github_token)
+
         user = await auth_service.authenticate_github_user(
             db=db,
-            github_token=github_token,
+            github_token=encrypted_token,
         )
 
         redirect = RedirectResponse(url=f"{envVariables.frontend_url}")
@@ -99,10 +115,3 @@ async def github_callback(
     except Exception:
         logger.exception("GitHub authentication failed")
         return github_auth_failure_redirect()
-
-
-AuthRouter.add_api_route("/signup", signup, methods=["POST"], name="Create a new account")
-AuthRouter.add_api_route("/login", login, methods=["POST"], name="Login into your account")
-AuthRouter.add_api_route("/logout", logout, methods=["POST"], name="Logout from your account")
-AuthRouter.add_api_route("/github", github_login, methods=["GET"], name="Login with GitHub")
-AuthRouter.add_api_route("/github/callback", github_callback, methods=["GET"], name="Exchange tokens with GitHub")

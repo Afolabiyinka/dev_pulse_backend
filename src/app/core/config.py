@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     github_client_id: str
     github_client_secret: str
     github_redirect_uri: str
+    github_token_encryption_key: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

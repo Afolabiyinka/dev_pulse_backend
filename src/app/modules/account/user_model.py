@@ -1,7 +1,6 @@
 from typing import Optional
 import uuid
 from sqlalchemy import UUID
-
 from sqlalchemy import BigInteger, Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
@@ -55,6 +54,10 @@ class User(Base):
         default=False,
         nullable=False,
     )
+    github_token: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        default=False,
+        nullable=False)
 
     @validates("email")
     def validate_email(self, key, value):

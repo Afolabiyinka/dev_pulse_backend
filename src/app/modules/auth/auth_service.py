@@ -1,10 +1,9 @@
 from sqlalchemy.orm import Session
-import httpx
-from app.modules.account.account_repository import get_user_by_email
-from app.modules.auth.auth_repository import create_user
+from app.core.encryption_helpers import decrypt_token
+from app.modules.account import account_repository
+from app.modules.account import account_repository
 from app.modules.auth.auth_validation import LoginRequest, SignUpRequest
-from app.modules.auth.github_auth_services import get_github_email, get_github_user
-from app.core.config import envVariables
+from app.modules.github import github_services
 from app.core.security import hash_password, verify_password
 
 
@@ -12,16 +11,16 @@ def register_user(
     db: Session,
     data: SignUpRequest,
 ):
-    existing_user = get_user_by_email(email=data.email, db=db)
+    existing_user = account_repository.get_user_by_email(email=data.email, db=db)
     if existing_user:
         raise ValueError("Email already in use")
 
     hashed = hash_password(data.password)
-    return create_user(db, data.email, hashed)
+    return account_repository.create_user(db, data.email, hashed)
 
 
 def authenticate_user(db: Session, data: LoginRequest):
-    user = get_user_by_email(db=db, email=data.email)
+    user = account_repository.get_user_by_email(db=db, email=data.email)
 
     if not user or user.password is None or not verify_password(data.password, user.password):
         return None
@@ -29,13 +28,15 @@ def authenticate_user(db: Session, data: LoginRequest):
 
 
 async def authenticate_github_user(db: Session, github_token: str):
-    github_user = await get_github_user(github_token)
-    github_email = await get_github_email(github_token)
+
+    decrypted_token = decrypt_token(github_token)
+    github_user = await github_services.get_github_user(decrypted_token)
+    github_email = await github_services.get_github_email(decrypted_token)
 
     if not github_email:
         raise ValueError("No verified GitHub email found")
 
-    user = get_user_by_email(
+    user = account_repository.get_user_by_email(
         db=db,
         email=github_email,
     )
@@ -46,12 +47,13 @@ async def authenticate_github_user(db: Session, github_token: str):
         user.github_name = github_user.get("name")
         user.avatar = github_user.get("avatar_url")
         user.github_authenticated = True
+        user.github_token = github_token
 
         db.commit()
         db.refresh(user)
         return user
 
-    user = create_user(
+    user = account_repository.create_user(
         db=db,
         email=github_email,
         password=None,
@@ -60,26 +62,9 @@ async def authenticate_github_user(db: Session, github_token: str):
         github_name=github_user.get("name"),
         avatar=github_user.get("avatar_url"),
         github_authenticated=True,
+        github_token=github_token
     )
 
     return user
 
 
-async def exchange_github_code(code: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://github.com/login/oauth/access_token",
-            data={
-                "client_id": envVariables.github_client_id,
-                "client_secret": envVariables.github_client_secret,
-                "code": code,
-                "redirect_uri": envVariables.github_redirect_uri,
-            },
-            headers={
-                "Accept": "application/json",
-            },
-        )
-
-    response.raise_for_status()
-    data = response.json()
-    return data["access_token"]

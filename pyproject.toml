@@ -1,7 +1,7 @@
 [project]
 name = "fastapi-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "The backend Service for Dev Pulse"
 readme = "README.md"
 authors = [
     { name = "Ice Chain", email = "afolabiyinka738@gmail.com" }
@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.19.1",
     "asyncpg>=0.31.0",
+    "cryptography>=50.0.2",
     "fastapi[standard]>=0.141.1",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
@@ -18,7 +19,9 @@ dependencies = [
     "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.13.0",
+    "redis>=8.1.0",
     "scalar-fastapi>=1.9.1",
+    "slowapi>=0.1.10",
     "sqlalchemy>=2.0.52",
     "uvicorn>=0.52.4",
 ]

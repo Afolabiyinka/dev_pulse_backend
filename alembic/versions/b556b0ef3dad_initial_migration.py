@@ -1,8 +1,8 @@
-"""create users table
+"""initial migration
 
-Revision ID: 6b298d0a91ba
+Revision ID: b556b0ef3dad
 Revises: 
-Create Date: 2026-10-05 15:39:15.230920
+Create Date: 2026-10-08 16:14:04.566175
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6b298d0a91ba'
+revision: str = 'b556b0ef3dad'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,6 +30,7 @@ def upgrade() -> None:
     sa.Column('github_username', sa.String(length=255), nullable=True),
     sa.Column('github_name', sa.String(length=255), nullable=True),
     sa.Column('github_authenticated', sa.Boolean(), nullable=False),
+    sa.Column('github_token', sa.String(length=500), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)

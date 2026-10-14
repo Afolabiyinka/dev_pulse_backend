@@ -1,9 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.modules.account.account_repository import (
-    update_user,
-    delete_user,
-)
+from app.modules.account import account_repository
 from app.modules.account.user_model import User
 
 
@@ -16,7 +13,7 @@ def update_account(
         exclude_unset=True,
     )
 
-    return update_user(
+    return account_repository.update_user(
         db=db,
         user=user,
         updates=updates,
@@ -27,7 +24,7 @@ def delete_account(
     db: Session,
     user: User,
 ):
-    delete_user(
+    account_repository.delete_user(
         db=db,
         user=user,
     )
